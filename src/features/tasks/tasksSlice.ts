@@ -32,6 +32,30 @@ export const createTask = createAsyncThunk('tasks/createTask', async function(ne
     else throw new Error('Response is not ok')
 })
 
+export const removeTask = createAsyncThunk('tasks/removeTask', async function(id: number) {
+    const response = await fetch(`/api/task/${id}`, {
+        method: 'DELETE'
+    })        
+    if (response.ok) {
+        return id
+    }
+    else throw new Error('Response is not ok')
+})
+
+export const updateTask = createAsyncThunk('tasks/updateTask', async function(updatedTask: TaskDTO) {
+    const response = await fetch(`/api/task/${updatedTask.id}`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updatedTask)
+    })
+    if (response.ok) {        
+        return updatedTask
+    }
+    else throw new Error('Response is not ok')
+})
+
 export const tasksSlice = createSlice({
     name: 'tasks',
     initialState: {
@@ -58,6 +82,15 @@ export const tasksSlice = createSlice({
         })
         builder.addCase(createTask.fulfilled, (state, action) => {
             state.tasks.push(action.payload)
+        })
+        builder.addCase(removeTask.fulfilled, (state, action) => {
+            const newTasks = state.tasks.filter(task => task.id !== action.payload)
+            return {...state, tasks: newTasks} 
+        })
+        builder.addCase(updateTask.fulfilled, (state, action) => {
+            const updatedTask = state.tasks.find((task) => task.id == action.payload.id)!
+            updatedTask.completed = action.payload.completed
+            updatedTask.text = action.payload.text
         })
     }
 })
